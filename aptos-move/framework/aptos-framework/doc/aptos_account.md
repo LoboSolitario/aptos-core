@@ -236,7 +236,7 @@ Basic account creation methods.
 
 <pre><code><b>public</b> entry <b>fun</b> <a href="aptos_account.md#0x1_aptos_account_create_account">create_account</a>(auth_key: <b>address</b>) {
     <b>let</b> account_signer = <a href="account.md#0x1_account_create_account">account::create_account</a>(auth_key);
-    <a href="aptos_account.md#0x1_aptos_account_register_apt">register_apt</a>(&account_signer);
+    <a href="aptos_account.md#0x1_aptos_account_register_apt">register_apt</a>(&account_signer)
 }
 </code></pre>
 

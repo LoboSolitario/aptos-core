@@ -55,7 +55,7 @@ module aptos_framework::aptos_account {
 
     public entry fun create_account(auth_key: address) {
         let account_signer = account::create_account(auth_key);
-        register_apt(&account_signer);
+        register_apt(&account_signer)
     }
 
     /// Batch version of APT transfer.
