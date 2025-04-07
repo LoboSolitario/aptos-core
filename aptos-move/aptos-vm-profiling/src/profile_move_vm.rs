@@ -107,7 +107,7 @@ fn build_binaries() -> Result<()> {
 }
 
 pub(crate) fn run(regenerate_all: bool) -> Result<()> {
-    build_binaries()?;
+    // build_binaries()?;
     profile_move_snippets(regenerate_all)?;
 
     Ok(())

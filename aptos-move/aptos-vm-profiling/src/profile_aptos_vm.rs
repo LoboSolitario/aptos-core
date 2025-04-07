@@ -60,7 +60,7 @@ fn build_binaries() -> Result<()> {
 }
 
 pub fn run() -> Result<()> {
-    build_binaries()?;
+    // build_binaries()?;
     run_aptos_p2p()?;
 
     Ok(())
