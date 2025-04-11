@@ -70,10 +70,15 @@ fn profile_move(path: impl AsRef<Path>, bin_mod_time: SystemTime, regenerate: bo
 }
 
 /// Profile all Move programs in the `move` directory.
-fn profile_move_snippets(regenerate_all: bool) -> Result<()> {
+fn profile_move_snippets(regenerate_all: bool, move_dir: Option<&str>) -> Result<()> {
     println!("Profiling Move VM...");
 
-    let root = Path::join(&PATH_CRATE_ROOT, "move");
+    // Use the provided directory or fall back to the default
+    let root = match move_dir {
+        Some(dir) => PathBuf::from(dir),
+        None => Path::join(&PATH_CRATE_ROOT, "move"),
+    };
+    
     let pat = format!("{}/**/*.mvir", root.to_string_lossy());
 
     let bin_mod_time = fs::metadata(&*PATH_BIN_RUN_MOVE)?.modified()?;
@@ -106,9 +111,9 @@ fn build_binaries() -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn run(regenerate_all: bool) -> Result<()> {
+pub(crate) fn run(regenerate_all: bool, move_dir: Option<&str>) -> Result<()> {
     // build_binaries()?;
-    profile_move_snippets(regenerate_all)?;
+    profile_move_snippets(regenerate_all, move_dir)?;
 
     Ok(())
 }

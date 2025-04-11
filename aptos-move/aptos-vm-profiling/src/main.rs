@@ -17,12 +17,15 @@ static PATH_CRATE_ROOT: Lazy<&Path> = Lazy::new(|| Path::new(env!("CARGO_MANIFES
 struct Args {
     #[clap(short = 'r', long)]
     regenerate_all: bool,
+    
+    #[clap(short = 'p', long, help = "Path to the Move code directory")]
+    move_dir: Option<String>,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    profile_move_vm::run(args.regenerate_all)?;
+    profile_move_vm::run(args.regenerate_all, args.move_dir.as_deref())?;
     profile_aptos_vm::run()?;
 
     Ok(())
