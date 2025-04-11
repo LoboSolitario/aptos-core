@@ -20,6 +20,7 @@ pub fn profile_with_valgrind(
     let log_path = log_path.as_ref();
     let annotation_path = annotation_path.as_ref();
 
+    println!("DEBUG: Starting valgrind profiling");
     // Run callgrind.
     let mut proc = Command::new("valgrind")
         .arg(format!(
@@ -35,13 +36,13 @@ pub fn profile_with_valgrind(
         .args(command_args)
         .spawn()?;
 
-    {
+    {   println!("DEBUG: Writing to stdin");
         let mut stdin = proc.stdin.take().unwrap();
         stdin.write_all(stdin_data)?;
     }
-
+    println!("DEBUG: Waiting for valgrind process to complete");
     let output = proc.wait_with_output()?;
-
+    println!("DEBUG: Valgrind process completed with status");
     if !output.status.success() {
         println!("{}", String::from_utf8_lossy(&output.stdout));
         eprintln!("{}", String::from_utf8_lossy(&output.stderr));
@@ -49,6 +50,7 @@ pub fn profile_with_valgrind(
     }
 
     // Run callgrind_annotate.
+    println!("DEBUG: Running callgrind_annotate");
     let output = Command::new("callgrind_annotate")
         .arg("--threshold=100")
         .arg("--tree=both")
