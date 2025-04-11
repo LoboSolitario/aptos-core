@@ -16,6 +16,7 @@ pub fn profile_with_valgrind(
     log_path: impl AsRef<Path>,
     annotation_path: impl AsRef<Path>,
 ) -> Result<()> {
+    println!("Profiling with Valgrind...");
     let log_path = log_path.as_ref();
     let annotation_path = annotation_path.as_ref();
 

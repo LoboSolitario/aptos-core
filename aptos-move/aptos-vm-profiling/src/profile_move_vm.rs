@@ -68,6 +68,7 @@ fn profile_move(path: impl AsRef<Path>, bin_mod_time: SystemTime, regenerate: bo
             path.file_name().unwrap().to_string_lossy()
         );
     }
+    println!("Profiling with Valgrind is starting ...");
 
     crate::valgrind::profile_with_valgrind(
         [&*PATH_BIN_RUN_MOVE, path],
