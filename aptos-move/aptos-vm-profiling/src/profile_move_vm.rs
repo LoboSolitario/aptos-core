@@ -14,6 +14,13 @@ use std::{
 const RUN_MOVE: &str = "run-move";
 
 static PATH_BIN_RUN_MOVE: Lazy<PathBuf> = Lazy::new(|| {
+
+    // First check if run-move exists in /usr/local/bin
+    let usr_local_bin_path = PathBuf::from("/usr/local/bin").join(RUN_MOVE);
+    if usr_local_bin_path.exists() {
+        return usr_local_bin_path;
+    }
+
     PATH_CRATE_ROOT
         .parent()
         .unwrap()

@@ -13,6 +13,11 @@ use std::{
 const RUN_APTOS_P2P: &str = "run-aptos-p2p";
 
 static PATH_BIN_RUN_APTOS_P2P: Lazy<PathBuf> = Lazy::new(|| {
+    let usr_local_bin_path = PathBuf::from("/usr/local/bin").join(RUN_APTOS_P2P);
+    if usr_local_bin_path.exists() {
+        return usr_local_bin_path;
+    }
+    
     PATH_CRATE_ROOT
         .parent()
         .unwrap()
