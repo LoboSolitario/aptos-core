@@ -21,7 +21,6 @@ pub fn profile_with_valgrind(
     let annotation_path = annotation_path.as_ref();
 
     println!("DEBUG: Starting valgrind profiling");
-    println!("DEBUG: command_args: {:?}", command_args);
     // Run callgrind.
     let mut proc = Command::new("valgrind")
         .arg(format!(
