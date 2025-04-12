@@ -68,8 +68,6 @@ fn profile_move(path: impl AsRef<Path>, bin_mod_time: SystemTime, regenerate: bo
             path.file_name().unwrap().to_string_lossy()
         );
     }
-    println!("Profiling with Valgrind is starting ...");
-    println!("DEBUG: PATH_BIN_RUN_MOVE: {:?}", PATH_BIN_RUN_MOVE);
     crate::valgrind::profile_with_valgrind(
         [&*PATH_BIN_RUN_MOVE, path],
         &[],
@@ -88,7 +86,7 @@ fn profile_move_snippets(regenerate_all: bool, move_dir: Option<&str>) -> Result
     let root = match move_dir {
         Some(dir) => PathBuf::from(dir),
         None => Path::join(&PATH_CRATE_ROOT, "move"),
-    };
+    }; 
     
     let pat = format!("{}/**/*.mvir", root.to_string_lossy());
 
