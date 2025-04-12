@@ -35,7 +35,7 @@ move-vm-test-utils = { workspace = true }
 move-vm-types = { workspace = true }
 
 [[bin]]
-name = "main"
+name = "aptos-vm-profiling"
 path  = "src/main.rs"
 
 [[bin]]
