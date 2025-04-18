@@ -15,7 +15,8 @@ use crate::{
     runtime_type_checks::{FullRuntimeTypeCheck, NoRuntimeTypeCheck, RuntimeTypeCheck},
     trace, LoadedFunction, ModuleStorage,
 };
-use aptos_logger::{debug, info};
+use log::{debug, info};
+use std::time::Instant;
 use fail::fail_point;
 use move_binary_format::{
     errors::*,
