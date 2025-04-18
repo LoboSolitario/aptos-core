@@ -15,6 +15,7 @@ use crate::{
     runtime_type_checks::{FullRuntimeTypeCheck, NoRuntimeTypeCheck, RuntimeTypeCheck},
     trace, LoadedFunction, ModuleStorage,
 };
+use aptos_logger::{debug, info};
 use fail::fail_point;
 use move_binary_format::{
     errors::*,
@@ -1723,7 +1724,8 @@ impl Frame {
                 //
                 // The reason for this design is we charge gas during instruction execution and we want to perform checks only after
                 // proper gas has been charged for each instruction.
-
+                let opcode_name = format!("{:?}", instruction);
+                
                 RTTCheck::check_operand_stack_balance(&interpreter.operand_stack)?;
                 RTTCheck::pre_execution_type_stack_transition(
                     &self.local_tys,
@@ -1734,6 +1736,10 @@ impl Frame {
                     instruction,
                 )?;
 
+                // Start timing right before executing the instruction
+                let start_time = Instant::now();
+                
+                // Execute the instruction
                 match instruction {
                     // TODO(#15664): implement closures
                     Bytecode::PackClosure(..)
@@ -2557,6 +2563,13 @@ impl Frame {
                     },
                 }
 
+                // Measure elapsed time immediately after execution
+                let elapsed = start_time.elapsed();
+                
+                // Log with opcode name and elapsed time
+                debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
+                
+                // Perform post-execution type checks
                 RTTCheck::post_execution_type_stack_transition(
                     &self.local_tys,
                     self.function.ty_args(),
