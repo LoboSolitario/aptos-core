@@ -5,6 +5,7 @@ use anyhow::Result;
 use clap::Parser;
 use once_cell::sync::Lazy;
 use std::path::Path;
+use env_logger;
 
 mod profile_aptos_vm;
 mod profile_move_vm;
@@ -23,6 +24,9 @@ struct Args {
 }
 
 fn main() -> Result<()> {
+    // Initialize the logger
+    env_logger::init();
+    
     let args = Args::parse();
 
     profile_move_vm::run(args.regenerate_all, args.move_dir.as_deref())?;
