@@ -7,6 +7,7 @@ use aptos_move_stdlib::natives::all_natives;
 use aptos_native_interface::SafeNativeBuilder;
 use aptos_table_natives::NativeTableContext;
 use aptos_types::on_chain_config::{Features, TimedFeaturesBuilder};
+use env_logger;
 use move_binary_format::CompiledModule;
 use move_core_types::{
     account_address::AccountAddress, ident_str, identifier::Identifier, language_storage::ModuleId,
@@ -131,6 +132,9 @@ fn compile_test_modules() -> Vec<CompiledModule> {
 }
 
 fn main() -> Result<()> {
+    // Initialize the logger to display logs from the move-vm-runtime crate
+    env_logger::init();
+    
     let args = env::args().collect::<Vec<_>>();
 
     if args.len() != 2 {
