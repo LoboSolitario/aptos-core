@@ -11,6 +11,13 @@ to understand the performance characteristics of the VM in general.
 To run the scripts, simply invoke the main binary via `cargo run -p aptos-vm-profiling`.
 The main binary will compile the individual scripts in release mode and then profile them.
 
+## Running the scripts for building the packages with debug options
+In order to find the cpu exec time for each opcode, we updated the `third_party/move/move-vm/runtime/src/interpreter.rs`file to use the rust Instant crate. It instruments before and after the execution of the opcode and logs it in debug mode. Hence when we invoke the aptos-vm (or move-vm) we have use `env_logger` to init it. 
+Hence when building this package, we do it as follows:
+```
+RUST_LOG=debug,move_vm_runtime=trace cargo build -p aptos-vm-profiling --bin run-move --release
+```
+
 Each profiling pass will produce two outputs:
 - `foo.log`
 - `foo.txt`
