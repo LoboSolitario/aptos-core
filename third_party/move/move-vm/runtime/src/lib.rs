@@ -2,7 +2,6 @@
 // Copyright (c) The Move Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-#![deny(unsafe_code)]
 #![deny(deprecated)]
 
 //! The core Move VM logic.

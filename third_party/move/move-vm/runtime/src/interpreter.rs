@@ -2,7 +2,6 @@
 // Copyright (c) The Move Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-#[allow(unsafe_code)]
 
 use crate::{
     access_control::AccessControlState,
