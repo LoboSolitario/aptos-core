@@ -52,6 +52,8 @@ use std::{
     fmt::Write,
     rc::Rc,
 };
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::_rdtsc;
 
 macro_rules! set_err_info {
     ($frame:ident, $e:expr) => {{
@@ -1737,7 +1739,10 @@ impl Frame {
                     instruction,
                 )?;
 
-                // Start timing right before executing the instruction
+                // Start timing using _rdtsc for CPU cycles
+                #[cfg(target_arch = "x86_64")]
+                let start_cycles = unsafe { _rdtsc() };
+                // Fallback to Instant for non-x86_64 architectures
                 let start_time = Instant::now();
                 
                 // Execute the instruction
@@ -2564,10 +2569,18 @@ impl Frame {
                     },
                 }
 
-                // Measure elapsed time immediately after execution
+                // Measure cycles after execution
+                #[cfg(target_arch = "x86_64")]
+                let end_cycles = unsafe { _rdtsc() };
+                #[cfg(target_arch = "x86_64")]
+                let cycles_elapsed = end_cycles - start_cycles;
+                
+                // Fallback to time measurement for non-x86_64 architectures
                 let elapsed = start_time.elapsed();
                 
-                // Log with opcode name and elapsed time
+                // Log with opcode name and cycles/time
+                #[cfg(target_arch = "x86_64")]
+                debug!("OPCODE_CPU_CYCLES,{},{}", opcode_name, cycles_elapsed);
                 debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
                 
                 // Perform post-execution type checks
