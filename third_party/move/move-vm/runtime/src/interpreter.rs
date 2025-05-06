@@ -1744,7 +1744,7 @@ impl Frame {
                 #[cfg(target_arch = "x86_64")]
                 let start_cycles = unsafe { _rdtsc() };
                 // Fallback to Instant for non-x86_64 architectures
-                let start_time = Instant::now();
+                // let start_time = Instant::now();
                 
                 // Execute the instruction
                 match instruction {
@@ -2582,7 +2582,7 @@ impl Frame {
                 // Log with opcode name and cycles/time
                 #[cfg(target_arch = "x86_64")]
                 debug!("OPCODE_CPU_CYCLES,{},{}", opcode_name, cycles_elapsed);
-                debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
+                // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
                 
                 // Perform post-execution type checks
                 RTTCheck::post_execution_type_stack_transition(
