@@ -2,6 +2,8 @@
 // Copyright (c) The Move Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+#[allow(unsafe_code)]
+
 use crate::{
     access_control::AccessControlState,
     data_cache::TransactionDataCache,
@@ -15,7 +17,7 @@ use crate::{
     runtime_type_checks::{FullRuntimeTypeCheck, NoRuntimeTypeCheck, RuntimeTypeCheck},
     trace, LoadedFunction, ModuleStorage,
 };
-use log::{debug, info};
+use log::debug;
 use std::time::Instant;
 use fail::fail_point;
 use move_binary_format::{
