@@ -2577,7 +2577,7 @@ impl Frame {
                 let cycles_elapsed = end_cycles - start_cycles;
                 
                 // Fallback to time measurement for non-x86_64 architectures
-                let elapsed = start_time.elapsed();
+                // let elapsed = start_time.elapsed();
                 
                 // Log with opcode name and cycles/time
                 #[cfg(target_arch = "x86_64")]
