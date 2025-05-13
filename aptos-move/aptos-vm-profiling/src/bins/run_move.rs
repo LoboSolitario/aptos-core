@@ -133,7 +133,9 @@ fn compile_test_modules() -> Vec<CompiledModule> {
 
 fn main() -> Result<()> {
     // Initialize the logger to display logs from the move-vm-runtime crate
-    env_logger::init();
+    env_logger::Builder::from_default_env()
+    .target(env_logger::Target::Stderr)
+    .init();
     
     let args = env::args().collect::<Vec<_>>();
 
