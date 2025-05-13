@@ -23,7 +23,7 @@ use move_vm_types::{
     pop_arg, values::Value,
 };
 use smallvec::smallvec;
-use std::{collections::VecDeque, env, fs, sync::Arc};
+use std::{collections::VecDeque, env, fs, sync::Arc, thread, time::Duration};
 
 /// For profiling, we can use scripts or "run" entry functions.
 enum Entrypoint {
@@ -182,6 +182,9 @@ fn main() -> Result<()> {
     {
         Entrypoint::Script(script_blob)
     } else {
+        // Add a delay after the script parsing error to allow error to be printed first
+        thread::sleep(Duration::from_secs(1));
+        
         let module = Compiler::new(test_modules.iter().collect()).into_compiled_module(&src)?;
         let mut module_blob = vec![];
         module.serialize(&mut module_blob)?;
