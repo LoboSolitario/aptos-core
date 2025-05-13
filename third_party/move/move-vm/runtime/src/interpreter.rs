@@ -2576,7 +2576,7 @@ impl Frame {
                 let resident = jemalloc_ctl::stats::resident::read().unwrap();
                 let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
                 let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
-                debug!("active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", active, allocated, resident, mapped, metadata);
+                debug!("Opcode_name: {}, active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", opcode_name, active, allocated, resident, mapped, metadata);
                 
                 
                 // Perform post-execution type checks
