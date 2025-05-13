@@ -53,8 +53,13 @@ use std::{
     fmt::Write,
     rc::Rc,
 };
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::_rdtsc;
+
+// Global allocator
+use jemallocator::Jemalloc;
+use jemalloc_ctl;
+
+#[global_allocator]
+static ALLOC: Jemalloc = Jemalloc;
 
 macro_rules! set_err_info {
     ($frame:ident, $e:expr) => {{
@@ -1740,12 +1745,6 @@ impl Frame {
                     instruction,
                 )?;
 
-                // Start timing using _rdtsc for CPU cycles
-                #[cfg(target_arch = "x86_64")]
-                let start_cycles = unsafe { _rdtsc() };
-                // Fallback to Instant for non-x86_64 architectures
-                // let start_time = Instant::now();
-                
                 // Execute the instruction
                 match instruction {
                     // TODO(#15664): implement closures
@@ -2570,19 +2569,15 @@ impl Frame {
                     },
                 }
 
-                // Measure cycles after execution
-                #[cfg(target_arch = "x86_64")]
-                let end_cycles = unsafe { _rdtsc() };
-                #[cfg(target_arch = "x86_64")]
-                let cycles_elapsed = end_cycles - start_cycles;
+                // Measure status after memory usage after executing opcode
+                jemalloc_ctl::epoch::advance().unwrap();
+                let active = jemalloc_ctl::stats::active::read().unwrap();
+                let allocated = jemalloc_ctl::stats::allocated::read().unwrap();
+                let resident = jemalloc_ctl::stats::resident::read().unwrap();
+                let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
+                let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
+                debug!("active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", active, allocated, resident, mapped, metadata);
                 
-                // Fallback to time measurement for non-x86_64 architectures
-                // let elapsed = start_time.elapsed();
-                
-                // Log with opcode name and cycles/time
-                #[cfg(target_arch = "x86_64")]
-                debug!("OPCODE_CPU_CYCLES,{},{}", opcode_name, cycles_elapsed);
-                // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
                 
                 // Perform post-execution type checks
                 RTTCheck::post_execution_type_stack_transition(
