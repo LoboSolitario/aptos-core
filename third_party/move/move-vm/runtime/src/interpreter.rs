@@ -193,7 +193,7 @@ impl InterpreterImpl {
                     // Use a separate block to handle header writing
                     let mut file_clone = file.try_clone().ok();
                     if let Some(ref mut f) = file_clone {
-                        let _ = writeln!(f, "opcode,execution_time_ns");
+                        let _ = writeln!(f, "opcode,execution_time_ns,bytes_read_delta,bytes_written_delta,active,allocated,resident,mapped,metadata");
                     }
                 }
             }
@@ -2666,7 +2666,7 @@ impl Frame {
                 //CPU EXECUTION TIME PROFILING
                 let elapsed = start_time.elapsed();
                 // Log with opcode name and elapsed time
-                debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
+                // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
 
                 // // CPU CYCLES PROFILING
                 // #[cfg(target_arch = "x86_64")]
@@ -2678,49 +2678,36 @@ impl Frame {
                 // debug!("OPCODE_CPU_CYCLES,{},{}", opcode_name, cycles_elapsed);
 
 
-                // // HEAP MEMORY USAGE PROFILING
-                // // Measure status after memory usage after executing opcode
-                // jemalloc_ctl::epoch::advance().unwrap();
-                // let active = jemalloc_ctl::stats::active::read().unwrap();
-                // let allocated = jemalloc_ctl::stats::allocated::read().unwrap();
-                // let resident = jemalloc_ctl::stats::resident::read().unwrap();
-                // let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
-                // let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
-                // debug!("Opcode_name: {}, active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", opcode_name, active, allocated, resident, mapped, metadata);
-                
-
                 // Storage I/O PROFILING (wchar and rchar)
                 // Increment opcode counter
-                // interpreter.opcode_counter += 1;
-                // debug!("Opcode_counter: {}, opcode_name: {}", interpreter.opcode_counter, opcode_name);
-
-                // // Check I/O metrics every 100 opcodes
-                // if interpreter.opcode_counter >= 100 {
-                //     // Reset counter
-                //     interpreter.opcode_counter = 0;
+                // Get current I/O stats
+                let mut bytes_read_delta = 0u64;
+                let mut bytes_written_delta = 0u64;
+                if let Ok((read_bytes, write_bytes)) = interpreter.read_proc_io_stats() {
+                    // Calculate delta since last check
+                    bytes_read_delta = read_bytes.saturating_sub(interpreter.last_read_bytes);
+                    bytes_written_delta = write_bytes.saturating_sub(interpreter.last_written_bytes);
                     
-                //     // Get current I/O stats
-                //     if let Ok((read_bytes, write_bytes)) = interpreter.read_proc_io_stats() {
-                //         // Calculate delta since last check
-                //         let bytes_read_delta = read_bytes.saturating_sub(interpreter.last_read_bytes);
-                //         let bytes_written_delta = write_bytes.saturating_sub(interpreter.last_written_bytes);
-                        
-                //         // Update last values
-                //         interpreter.last_read_bytes = read_bytes;
-                //         interpreter.last_written_bytes = write_bytes;
-                        
-                //         // Log the stats
-                //         debug!(
-                //             "I/O Stats after 100 opcodes - Bytes read: {}, Bytes written: {}",
-                //             bytes_read_delta, bytes_written_delta
-                //         );
-                //     }
-                // }
-                debug!("Opcode_name: {}, opcode_name: {}", opcode_name, opcode_name);
+                    // Update last values
+                    interpreter.last_read_bytes = read_bytes;
+                    interpreter.last_written_bytes = write_bytes;
+
+                }
+
+
+                // HEAP MEMORY USAGE PROFILING
+                // Measure status after memory usage after executing opcode
+                jemalloc_ctl::epoch::advance().unwrap();
+                let active = jemalloc_ctl::stats::active::read().unwrap();
+                let allocated = jemalloc_ctl::stats::allocated::read().unwrap();
+                let resident = jemalloc_ctl::stats::resident::read().unwrap();
+                let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
+                let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
+
                 // Record execution time to CSV if enabled
                 if let Some(file) = &mut interpreter.profiling_file {
                     let elapsed = start_time.elapsed();
-                    let _ = writeln!(file, "{},{}", opcode_name, elapsed.as_nanos());
+                    let _ = writeln!(file, "{},{},{},{},{},{},{},{},{}", opcode_name, elapsed.as_nanos(), bytes_read_delta, bytes_written_delta, active, allocated, resident, mapped, metadata);
                 }
                 
                 // Perform post-execution type checks
