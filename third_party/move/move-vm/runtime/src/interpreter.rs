@@ -58,8 +58,8 @@ use std::{
 use jemallocator::Jemalloc;
 use jemalloc_ctl;
 
-#[global_allocator]
-static ALLOC: Jemalloc = Jemalloc;
+// #[global_allocator]
+// static ALLOC: Jemalloc = Jemalloc;
 
 macro_rules! set_err_info {
     ($frame:ident, $e:expr) => {{
