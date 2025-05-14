@@ -174,6 +174,13 @@ impl InterpreterImpl {
             let path = std::env::var("MOVE_VM_PROFILE_PATH").unwrap_or_else(|_| "move_vm_profiling.csv".to_string());
             let file_exists = Path::new(&path).exists();
             
+            // Log the absolute path where we're creating the file
+            if let Ok(absolute_path) = std::fs::canonicalize(Path::new(&path)).or_else(|_| std::env::current_dir().map(|d| d.join(&path))) {
+                debug!("Creating Move VM profiling CSV at: {}", absolute_path.display());
+            } else {
+                debug!("Creating Move VM profiling CSV at path: {}", path);
+            }
+            
             let file = OpenOptions::new()
                 .create(true)
                 .append(true)
