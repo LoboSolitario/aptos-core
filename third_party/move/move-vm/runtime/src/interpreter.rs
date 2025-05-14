@@ -54,6 +54,10 @@ use std::{
     collections::{btree_map, BTreeSet, HashMap, VecDeque},
     fmt::Write,
     rc::Rc,
+    fs::{File, OpenOptions},
+    io::Write as IoWrite,
+    path::Path,
+    sync::Once,
 };
 
 // Global allocator
@@ -103,7 +107,12 @@ pub(crate) struct InterpreterImpl {
     last_read_bytes: u64,
     /// Last written bytes from /proc/self/io
     last_written_bytes: u64,
+    /// File handle for CSV output
+    profiling_file: Option<File>,
 }
+
+// One-time initialization for CSV header
+static CSV_HEADER_INIT: Once = Once::new();
 
 struct TypeWithLoader<'a, 'b, 'c> {
     ty: &'a Type,
@@ -161,6 +170,32 @@ impl InterpreterImpl {
         extensions: &mut NativeContextExtensions,
         loader: &Loader,
     ) -> VMResult<Vec<Value>> {
+        let profiling_file = if std::env::var("MOVE_VM_PROFILE_CSV").is_ok() {
+            let path = std::env::var("MOVE_VM_PROFILE_PATH").unwrap_or_else(|_| "move_vm_profiling.csv".to_string());
+            let file_exists = Path::new(&path).exists();
+            
+            let file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .ok();
+                
+            // Write CSV header if file was just created
+            if let Some(file) = &file {
+                if !file_exists {
+                    // Use a separate block to handle header writing
+                    let mut file_clone = file.try_clone().ok();
+                    if let Some(ref mut f) = file_clone {
+                        let _ = writeln!(f, "opcode,execution_time_ns");
+                    }
+                }
+            }
+            
+            file
+        } else {
+            None
+        };
+
         let interpreter = InterpreterImpl {
             operand_stack: Stack::new(),
             call_stack: CallStack::new(),
@@ -170,6 +205,7 @@ impl InterpreterImpl {
             opcode_counter: 0,
             last_read_bytes: 0,
             last_written_bytes: 0,
+            profiling_file,
         };
 
         let function = Rc::new(function);
@@ -1795,7 +1831,7 @@ impl Frame {
                 // let start_cycles = unsafe { _rdtsc() };
 
                 // CPU EXECUTION TIME PROFILING
-                // let start_time = Instant::now();
+                let start_time = Instant::now();
 
                 // Execute the instruction
                 match instruction {
@@ -2673,6 +2709,11 @@ impl Frame {
                 //         );
                 //     }
                 // }
+                // Record execution time to CSV if enabled
+                if let Some(file) = &mut interpreter.profiling_file {
+                    let elapsed = start_time.elapsed();
+                    let _ = writeln!(file, "{},{}", opcode_name, elapsed.as_nanos());
+                }
                 
                 // Perform post-execution type checks
                 RTTCheck::post_execution_type_stack_transition(
