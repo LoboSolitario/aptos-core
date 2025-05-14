@@ -20,7 +20,7 @@ use log::debug;
 use std::time::Instant;
 // #[cfg(target_arch = "x86_64")]
 // use std::arch::x86_64::_rdtsc;
-// use fail::fail_point;
+use fail::fail_point;
 use move_binary_format::{
     errors::*,
     file_format::{
