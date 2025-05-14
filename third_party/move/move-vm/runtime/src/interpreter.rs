@@ -2663,10 +2663,10 @@ impl Frame {
                         vec_ref.swap(idx1, idx2, ty)?;
                     },
                 }
-                // //CPU EXECUTION TIME PROFILING
-                // let elapsed = start_time.elapsed();
-                // // Log with opcode name and elapsed time
-                // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
+                //CPU EXECUTION TIME PROFILING
+                let elapsed = start_time.elapsed();
+                // Log with opcode name and elapsed time
+                debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
 
                 // // CPU CYCLES PROFILING
                 // #[cfg(target_arch = "x86_64")]
@@ -2716,6 +2716,7 @@ impl Frame {
                 //         );
                 //     }
                 // }
+                debug!("Opcode_name: {}, opcode_name: {}", opcode_name, opcode_name);
                 // Record execution time to CSV if enabled
                 if let Some(file) = &mut interpreter.profiling_file {
                     let elapsed = start_time.elapsed();
