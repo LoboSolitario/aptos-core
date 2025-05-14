@@ -2635,6 +2635,7 @@ impl Frame {
 
                 // Increment opcode counter
                 interpreter.opcode_counter += 1;
+                debug!("Opcode_counter: {}, opcode_name: {}", interpreter.opcode_counter, opcode_name);
 
                 // Check I/O metrics every 100 opcodes
                 if interpreter.opcode_counter >= 100 {
