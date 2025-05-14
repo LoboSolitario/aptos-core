@@ -101,8 +101,6 @@ pub(crate) struct InterpreterImpl {
     access_control: AccessControlState,
     /// Set of modules that exists on call stack.
     active_modules: BTreeSet<ModuleId>,
-    /// Counter for tracking number of opcodes executed since last storage I/O check
-    opcode_counter: u64,
     /// Last read bytes from /proc/self/io
     last_read_bytes: u64,
     /// Last written bytes from /proc/self/io
@@ -110,9 +108,6 @@ pub(crate) struct InterpreterImpl {
     /// File handle for CSV output
     profiling_file: Option<File>,
 }
-
-// One-time initialization for CSV header
-static CSV_HEADER_INIT: Once = Once::new();
 
 struct TypeWithLoader<'a, 'b, 'c> {
     ty: &'a Type,
@@ -209,7 +204,6 @@ impl InterpreterImpl {
             paranoid_type_checks: loader.vm_config().paranoid_type_checks,
             access_control: AccessControlState::default(),
             active_modules: BTreeSet::new(),
-            opcode_counter: 0,
             last_read_bytes: 0,
             last_written_bytes: 0,
             profiling_file,
