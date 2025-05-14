@@ -18,7 +18,9 @@ use crate::{
 };
 use log::debug;
 use std::time::Instant;
-use fail::fail_point;
+// #[cfg(target_arch = "x86_64")]
+// use std::arch::x86_64::_rdtsc;
+// use fail::fail_point;
 use move_binary_format::{
     errors::*,
     file_format::{
@@ -55,8 +57,8 @@ use std::{
 };
 
 // Global allocator
-use jemallocator::Jemalloc;
-use jemalloc_ctl;
+// use jemallocator::Jemalloc;
+// use jemalloc_ctl;
 
 // #[global_allocator]
 // static ALLOC: Jemalloc = Jemalloc;
@@ -1787,6 +1789,14 @@ impl Frame {
                     instruction,
                 )?;
 
+                // // CPU CYCLES PROFILING
+                // // Start timing using _rdtsc for CPU cycles
+                // #[cfg(target_arch = "x86_64")]
+                // let start_cycles = unsafe { _rdtsc() };
+
+                // CPU EXECUTION TIME PROFILING
+                // let start_time = Instant::now();
+
                 // Execute the instruction
                 match instruction {
                     // TODO(#15664): implement closures
@@ -2610,7 +2620,22 @@ impl Frame {
                         vec_ref.swap(idx1, idx2, ty)?;
                     },
                 }
+                // //CPU EXECUTION TIME PROFILING
+                // let elapsed = start_time.elapsed();
+                // // Log with opcode name and elapsed time
+                // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
 
+                // // CPU CYCLES PROFILING
+                // #[cfg(target_arch = "x86_64")]
+                // let end_cycles = unsafe { _rdtsc() };
+                // #[cfg(target_arch = "x86_64")]
+                // let cycles_elapsed = end_cycles - start_cycles;
+                // // Log with opcode name and cycles/time
+                // #[cfg(target_arch = "x86_64")]
+                // debug!("OPCODE_CPU_CYCLES,{},{}", opcode_name, cycles_elapsed);
+
+
+                // // HEAP MEMORY USAGE PROFILING
                 // // Measure status after memory usage after executing opcode
                 // jemalloc_ctl::epoch::advance().unwrap();
                 // let active = jemalloc_ctl::stats::active::read().unwrap();
@@ -2619,8 +2644,35 @@ impl Frame {
                 // let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
                 // let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
                 // debug!("Opcode_name: {}, active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", opcode_name, active, allocated, resident, mapped, metadata);
-                debug!("Opcode_counter: {}, opcode_name: {}", interpreter.opcode_counter, opcode_name);
                 
+
+                // Storage I/O PROFILING (wchar and rchar)
+                // Increment opcode counter
+                // interpreter.opcode_counter += 1;
+                // debug!("Opcode_counter: {}, opcode_name: {}", interpreter.opcode_counter, opcode_name);
+
+                // // Check I/O metrics every 100 opcodes
+                // if interpreter.opcode_counter >= 100 {
+                //     // Reset counter
+                //     interpreter.opcode_counter = 0;
+                    
+                //     // Get current I/O stats
+                //     if let Ok((read_bytes, write_bytes)) = interpreter.read_proc_io_stats() {
+                //         // Calculate delta since last check
+                //         let bytes_read_delta = read_bytes.saturating_sub(interpreter.last_read_bytes);
+                //         let bytes_written_delta = write_bytes.saturating_sub(interpreter.last_written_bytes);
+                        
+                //         // Update last values
+                //         interpreter.last_read_bytes = read_bytes;
+                //         interpreter.last_written_bytes = write_bytes;
+                        
+                //         // Log the stats
+                //         debug!(
+                //             "I/O Stats after 100 opcodes - Bytes read: {}, Bytes written: {}",
+                //             bytes_read_delta, bytes_written_delta
+                //         );
+                //     }
+                // }
                 
                 // Perform post-execution type checks
                 RTTCheck::post_execution_type_stack_transition(
@@ -2633,32 +2685,6 @@ impl Frame {
                 )?;
                 RTTCheck::check_operand_stack_balance(&interpreter.operand_stack)?;
 
-                // Increment opcode counter
-                interpreter.opcode_counter += 1;
-                debug!("Opcode_counter: {}, opcode_name: {}", interpreter.opcode_counter, opcode_name);
-
-                // Check I/O metrics every 100 opcodes
-                if interpreter.opcode_counter >= 100 {
-                    // Reset counter
-                    interpreter.opcode_counter = 0;
-                    
-                    // Get current I/O stats
-                    if let Ok((read_bytes, write_bytes)) = interpreter.read_proc_io_stats() {
-                        // Calculate delta since last check
-                        let bytes_read_delta = read_bytes.saturating_sub(interpreter.last_read_bytes);
-                        let bytes_written_delta = write_bytes.saturating_sub(interpreter.last_written_bytes);
-                        
-                        // Update last values
-                        interpreter.last_read_bytes = read_bytes;
-                        interpreter.last_written_bytes = write_bytes;
-                        
-                        // Log the stats
-                        debug!(
-                            "I/O Stats after 100 opcodes - Bytes read: {}, Bytes written: {}",
-                            bytes_read_delta, bytes_written_delta
-                        );
-                    }
-                }
 
                 // invariant: advance to pc +1 is iff instruction at pc executed without aborting
                 self.pc += 1;
