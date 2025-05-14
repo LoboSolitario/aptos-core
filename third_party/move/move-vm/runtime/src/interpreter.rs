@@ -95,6 +95,12 @@ pub(crate) struct InterpreterImpl {
     access_control: AccessControlState,
     /// Set of modules that exists on call stack.
     active_modules: BTreeSet<ModuleId>,
+    /// Counter for tracking number of opcodes executed since last storage I/O check
+    opcode_counter: u64,
+    /// Last read bytes from /proc/self/io
+    last_read_bytes: u64,
+    /// Last written bytes from /proc/self/io
+    last_written_bytes: u64,
 }
 
 struct TypeWithLoader<'a, 'b, 'c> {
@@ -159,6 +165,9 @@ impl InterpreterImpl {
             paranoid_type_checks: loader.vm_config().paranoid_type_checks,
             access_control: AccessControlState::default(),
             active_modules: BTreeSet::new(),
+            opcode_counter: 0,
+            last_read_bytes: 0,
+            last_written_bytes: 0,
         };
 
         let function = Rc::new(function);
@@ -1361,6 +1370,39 @@ impl InterpreterImpl {
 
     fn get_internal_state(&self) -> ExecutionState {
         self.get_stack_frames(usize::MAX)
+    }
+
+    fn read_proc_io_stats(&mut self) -> PartialVMResult<(u64, u64)> {
+        use std::fs::File;
+        use std::io::{BufRead, BufReader};
+        
+        let file = match File::open("/proc/self/io") {
+            Ok(file) => file,
+            Err(_) => return Ok((0, 0)), // Return zeros if file can't be opened
+        };
+        
+        let reader = BufReader::new(file);
+        let mut read_bytes = 0;
+        let mut write_bytes = 0;
+        
+        for line in reader.lines() {
+            let line = match line {
+                Ok(line) => line,
+                Err(_) => continue,
+            };
+            
+            if line.starts_with("read_bytes:") {
+                if let Some(val) = line.split_whitespace().nth(1) {
+                    read_bytes = val.parse().unwrap_or(0);
+                }
+            } else if line.starts_with("write_bytes:") {
+                if let Some(val) = line.split_whitespace().nth(1) {
+                    write_bytes = val.parse().unwrap_or(0);
+                }
+            }
+        }
+        
+        Ok((read_bytes, write_bytes))
     }
 }
 
@@ -2569,14 +2611,15 @@ impl Frame {
                     },
                 }
 
-                // Measure status after memory usage after executing opcode
-                jemalloc_ctl::epoch::advance().unwrap();
-                let active = jemalloc_ctl::stats::active::read().unwrap();
-                let allocated = jemalloc_ctl::stats::allocated::read().unwrap();
-                let resident = jemalloc_ctl::stats::resident::read().unwrap();
-                let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
-                let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
-                debug!("Opcode_name: {}, active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", opcode_name, active, allocated, resident, mapped, metadata);
+                // // Measure status after memory usage after executing opcode
+                // jemalloc_ctl::epoch::advance().unwrap();
+                // let active = jemalloc_ctl::stats::active::read().unwrap();
+                // let allocated = jemalloc_ctl::stats::allocated::read().unwrap();
+                // let resident = jemalloc_ctl::stats::resident::read().unwrap();
+                // let mapped = jemalloc_ctl::stats::mapped::read().unwrap();
+                // let metadata = jemalloc_ctl::stats::metadata::read().unwrap();
+                // debug!("Opcode_name: {}, active: {}, allocated: {}, resident: {}, mapped: {}, metadata: {}", opcode_name, active, allocated, resident, mapped, metadata);
+                
                 
                 
                 // Perform post-execution type checks
@@ -2589,6 +2632,32 @@ impl Frame {
                     instruction,
                 )?;
                 RTTCheck::check_operand_stack_balance(&interpreter.operand_stack)?;
+
+                // Increment opcode counter
+                interpreter.opcode_counter += 1;
+
+                // Check I/O metrics every 100 opcodes
+                if interpreter.opcode_counter >= 100 {
+                    // Reset counter
+                    interpreter.opcode_counter = 0;
+                    
+                    // Get current I/O stats
+                    if let Ok((read_bytes, write_bytes)) = interpreter.read_proc_io_stats() {
+                        // Calculate delta since last check
+                        let bytes_read_delta = read_bytes.saturating_sub(interpreter.last_read_bytes);
+                        let bytes_written_delta = write_bytes.saturating_sub(interpreter.last_written_bytes);
+                        
+                        // Update last values
+                        interpreter.last_read_bytes = read_bytes;
+                        interpreter.last_written_bytes = write_bytes;
+                        
+                        // Log the stats
+                        debug!(
+                            "I/O Stats after 100 opcodes - Bytes read: {}, Bytes written: {}",
+                            bytes_read_delta, bytes_written_delta
+                        );
+                    }
+                }
 
                 // invariant: advance to pc +1 is iff instruction at pc executed without aborting
                 self.pc += 1;
