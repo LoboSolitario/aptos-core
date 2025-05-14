@@ -2706,7 +2706,6 @@ impl Frame {
 
                 // Record execution time to CSV if enabled
                 if let Some(file) = &mut interpreter.profiling_file {
-                    let elapsed = start_time.elapsed();
                     let _ = writeln!(file, "{},{},{},{},{},{},{},{},{}", opcode_name, elapsed.as_nanos(), bytes_read_delta, bytes_written_delta, active, allocated, resident, mapped, metadata);
                 }
                 
