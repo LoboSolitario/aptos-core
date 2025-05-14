@@ -1795,7 +1795,7 @@ impl Frame {
                 // let start_cycles = unsafe { _rdtsc() };
 
                 // CPU EXECUTION TIME PROFILING
-                let start_time = Instant::now();
+                // let start_time = Instant::now();
 
                 // Execute the instruction
                 match instruction {
@@ -2620,10 +2620,10 @@ impl Frame {
                         vec_ref.swap(idx1, idx2, ty)?;
                     },
                 }
-                //CPU EXECUTION TIME PROFILING
-                let elapsed = start_time.elapsed();
-                // Log with opcode name and elapsed time
-                debug!("OPCODE_EXECUTION_TIME: Opcode_name: {}, start_time: {}, elapsed_time: {}", opcode_name, start_time, elapsed.as_nanos());
+                // //CPU EXECUTION TIME PROFILING
+                // let elapsed = start_time.elapsed();
+                // // Log with opcode name and elapsed time
+                // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
 
                 // // CPU CYCLES PROFILING
                 // #[cfg(target_arch = "x86_64")]
