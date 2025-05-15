@@ -18,8 +18,8 @@ use crate::{
 };
 use log::debug;
 use std::time::Instant;
-// #[cfg(target_arch = "x86_64")]
-// use std::arch::x86_64::_rdtsc;
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::_rdtsc;
 use fail::fail_point;
 use move_binary_format::{
     errors::*,
@@ -188,7 +188,7 @@ impl InterpreterImpl {
                     // Use a separate block to handle header writing
                     let mut file_clone = file.try_clone().ok();
                     if let Some(ref mut f) = file_clone {
-                        let _ = writeln!(f, "opcode,execution_time_ns,bytes_read_delta,bytes_written_delta,active,allocated,resident,mapped,metadata");
+                        let _ = writeln!(f, "opcode,execution_time_ns,cpu_cycles_elapsed,bytes_read_delta,bytes_written_delta,active,allocated,resident,mapped,metadata");
                     }
                 }
             }
@@ -1828,8 +1828,8 @@ impl Frame {
 
                 // // CPU CYCLES PROFILING
                 // // Start timing using _rdtsc for CPU cycles
-                // #[cfg(target_arch = "x86_64")]
-                // let start_cycles = unsafe { _rdtsc() };
+                #[cfg(target_arch = "x86_64")]
+                let start_cycles = unsafe { _rdtsc() };
 
                 // CPU EXECUTION TIME PROFILING
                 let start_time = Instant::now();
@@ -2663,10 +2663,10 @@ impl Frame {
                 // debug!("OPCODE_TIMING,{},{}", opcode_name, elapsed.as_nanos());
 
                 // // CPU CYCLES PROFILING
-                // #[cfg(target_arch = "x86_64")]
-                // let end_cycles = unsafe { _rdtsc() };
-                // #[cfg(target_arch = "x86_64")]
-                // let cycles_elapsed = end_cycles - start_cycles;
+                #[cfg(target_arch = "x86_64")]
+                let end_cycles = unsafe { _rdtsc() };
+                #[cfg(target_arch = "x86_64")]
+                let cycles_elapsed = end_cycles - start_cycles;
                 // // Log with opcode name and cycles/time
                 // #[cfg(target_arch = "x86_64")]
                 // debug!("OPCODE_CPU_CYCLES,{},{}", opcode_name, cycles_elapsed);
@@ -2700,7 +2700,7 @@ impl Frame {
 
                 // Record execution time to CSV if enabled
                 if let Some(file) = &mut interpreter.profiling_file {
-                    let _ = writeln!(file, "{},{},{},{},{},{},{},{},{}", opcode_name, elapsed.as_nanos(), bytes_read_delta, bytes_written_delta, active, allocated, resident, mapped, metadata);
+                    let _ = writeln!(file, "{},{},{},{},{},{},{},{},{},{}", opcode_name, elapsed.as_nanos(), cycles_elapsed, bytes_read_delta, bytes_written_delta, active, allocated, resident, mapped, metadata);
                 }
                 
                 // Perform post-execution type checks
